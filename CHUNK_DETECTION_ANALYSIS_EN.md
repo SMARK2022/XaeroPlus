@@ -277,7 +277,56 @@ Uses fluid (water and lava) flow behavior to detect new chunks. Fluids in newly 
 
 ## Problem Analysis on 3c3u Server
 
-According to the problem description, XaeroPlus shows "random incorrect chunk highlights" on 3c3u server. Possible reasons include:
+According to the problem description, XaeroPlus shows "random incorrect chunk highlights" on 3c3u server, displaying a fragmented **salt-and-pepper noise** pattern that makes effective chunk state analysis impossible.
+
+### **Critical Discovery: GrimAC Anti-Cheat's Anti-Xray Feature**
+
+**This is the root cause of all detection method failures!**
+
+The 3c3u server uses the GrimAC anti-cheat plugin, with one of its core features being **Anti-Xray**:
+
+#### How GrimAC Anti-Xray Works:
+
+1. **Block Data Replacement**:
+   - Server replaces ores and characteristic blocks in unexplored chunks with:
+     - Air (AIR)
+     - Bedrock (BEDROCK)
+     - Deepslate (DEEPSLATE)
+   - These replaced block data are sent to the client to hide real ore locations
+
+2. **Visibility Rules**:
+   - Only cave walls connected to the sky can display normally
+   - Geodes and other cavities can display normally (as they're hollow spaces, not filled)
+   - Underground features like dripleaf are almost impossible to observe
+
+3. **Personalized Display**:
+   - This feature only affects the current player
+   - Even if other players dig out an area, it still shows replaced blocks to the current player
+
+4. **Render Distance Limitation**:
+   - 3c3u's chunk horizontal display distance is only 64 blocks
+   - Only chunks within 64 blocks horizontally are loaded and sent to the client
+
+#### Fatal Impact on Each Detection Method:
+
+**OldChunks Detection - Completely Broken:**
+- ❌ Relies on detecting specific blocks (copper ore, deepslate, tuff, etc.)
+- ❌ GrimAC replaces these blocks with air or bedrock
+- ❌ Detection sees tampered data instead of real chunk content
+- ❌ Result: Random false positives and negatives, salt-and-pepper noise pattern
+
+**PaletteNewChunks Detection - Severely Disrupted:**
+- ⚠️ GrimAC modifies block states before sending chunk data
+- ⚠️ Modified palette may contain numerous artificially added air, bedrock, deepslate entries
+- ⚠️ These artificial entries interfere with palette order and extra entry checks
+- ⚠️ Biome palette checks may still work (if GrimAC doesn't modify biome data)
+- ⚠️ Result: Detection accuracy significantly reduced, but slightly better than OldChunks
+
+**LiquidNewChunks Detection - Partially Broken:**
+- ⚠️ Underground fluids may be hidden or modified by GrimAC
+- ⚠️ Surface fluids (Y > 0) may not be affected
+- ⚠️ But 64-block render distance limits detectable area
+- ⚠️ Result: Surface detection may work, underground detection completely broken
 
 ### 1. Server Uses Pre-generated Chunks
 
@@ -331,25 +380,84 @@ According to the problem description, XaeroPlus shows "random incorrect chunk hi
 
 ### Configuration Recommendations for 3c3u Server
 
-1. **Disable OldChunks Detection**
+**⚠️ Important Notice: Due to GrimAC Anti-Xray's impact, all block-data-based detection methods on 3c3u will be severely disrupted. The following configuration can only minimize false positives, not completely solve the problem.**
+
+#### Current Best Configuration (Reduce Noise):
+
+1. **❌ Must Disable OldChunks Detection**
    ```
    Settings → Chunk Highlights → Old Chunks → Off
    ```
+   **Reason**: GrimAC replaces all characteristic blocks needed for detection, resulting in completely random detection results
 
-2. **Use PaletteNewChunks as Primary Detection Method**
+2. **✅ Use PaletteNewChunks with Biome Detection Only**
    ```
    Settings → Chunk Highlights → Palette NewChunks → On
-   Settings → Chunk Highlights → Palette NewChunks Version Upgraded → Decide based on server version history
+   Settings → Chunk Highlights → Palette NewChunks Version Upgraded → Off
    ```
+   **Reason**:
+   - GrimAC may not modify biome data
+   - Disable "Version Upgraded" to avoid blockstate palette checks (polluted by GrimAC)
+   - Rely only on biome palette plains detection (relatively reliable)
 
-3. **Disable LiquidNewChunks or Limit Detection Range**
+3. **⚠️ Limit LiquidNewChunks to Surface Detection**
    ```
-   Settings → Chunk Highlights → Liquid NewChunks → Off
-   Or
+   Settings → Chunk Highlights → Liquid NewChunks → On
    Settings → Chunk Highlights → Liquid NewChunks Only Y > 0 → On
    ```
+   **Reason**:
+   - Surface fluids unlikely to be modified by GrimAC
+   - Underground fluid data unreliable
+   - But 64-block render distance limits detectable area
+
+#### Expected Real-World Performance:
+
+Even with the above optimal configuration, on 3c3u you will still see:
+- ❌ High false positive rate: Many old chunks incorrectly marked as new
+- ❌ High false negative rate: Many new chunks not detected
+- ❌ Fragmented pattern: Salt-and-pepper noise effect persists but with reduced intensity
+
+**Fundamental Solution:**
+On servers using GrimAC Anti-Xray, **reliable chunk age detection is impossible** because block data received by the client has been tampered with by the server.
 
 ### Code-Level Optimization Recommendations
+
+#### Special Handling for GrimAC Anti-Xray:
+
+**Core Problem**: GrimAC modifies block data sent to the client on the server side; the client cannot access real chunk content.
+
+**Possible Technical Solutions:**
+
+1. **Detect GrimAC Presence and Auto-Disable Affected Detection**
+   - Add GrimAC detection logic (via server brand, plugin list, etc.)
+   - Automatically disable OldChunks detection
+   - Automatically switch PaletteNewChunks to biome-only mode
+   - Display warning message to user
+
+2. **Use Data Sources Unaffected by GrimAC**
+   - ✅ Biome data (usually not modified by anti-xray)
+   - ✅ Surface block data (Y > 60)
+   - ✅ Sky-connected visible blocks
+   - ✅ Entity data (types and quantities of spawned mobs)
+   - ✅ Terrain heightmap
+
+3. **Develop New Detection Methods (Independent of Underground Blocks)**
+   - Analyze surface biome distribution patterns
+   - Detect terrain generation features (mountains, rivers, ocean shapes)
+   - Detect structure generation patterns (village, stronghold locations)
+   - Analyze world generation seed-related features
+
+4. **Server-Side Solutions (Requires Server Cooperation)**
+   - Run XaeroPlus analysis plugin on the server
+   - Send real chunk state information via custom data packets
+   - Use server API to provide chunk generation timestamps
+
+5. **User Manual Marking System**
+   - Allow users to manually mark known new/old chunks
+   - Use machine learning to learn patterns from user markings
+   - Automatically apply learned patterns to similar areas
+
+#### Existing Code Optimization Suggestions:
 
 1. **Add Server-Specific Configuration Files**
    - Create server configuration file system
@@ -427,6 +535,9 @@ According to the problem description, XaeroPlus shows "random incorrect chunk hi
 | Implementation Complexity | Low | High | Medium |
 | Server Compatibility | Low | High | Medium |
 | Player Behavior Impact | High | Low | High |
+| **GrimAC Resistance** | ❌ Completely Broken | ⚠️ Severely Disrupted | ⚠️ Partially Broken |
+
+**Note**: GrimAC Resistance refers to performance on servers using GrimAC Anti-Xray
 
 ### Recommended Usage Strategy
 
@@ -435,10 +546,13 @@ According to the problem description, XaeroPlus shows "random incorrect chunk hi
 - Secondary: OldChunks
 - Optional: LiquidNewChunks
 
-**3c3u Server:**
-- Primary: PaletteNewChunks (configure based on actual situation)
-- Not Recommended: OldChunks
-- Use Cautiously: LiquidNewChunks (recommend disable or limit Y > 0)
+**3c3u Server (Using GrimAC Anti-Xray):**
+- ❌ **Not Recommended to Use Any Detection Method** (data tampered)
+- If must use:
+  - Only use PaletteNewChunks biome mode (`Version Upgraded` set to Off)
+  - Limit LiquidNewChunks to Y > 0
+  - Accept high false positive rate and fragmented display
+- Recommended: Wait for GrimAC-specific detection methods
 
 **General Servers:**
 - Primary: PaletteNewChunks (disable Version Upgraded)
