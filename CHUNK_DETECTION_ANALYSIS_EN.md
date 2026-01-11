@@ -18,7 +18,7 @@ The OldChunks module determines whether a chunk is new or old by checking for th
 #### Detection Logic
 
 **Overworld:**
-Checks for blocks introduced in 1.17+ (at least 5 instances):
+Checks for blocks introduced in 1.17+ (scanning from Y=5 and above):
 - Copper Ore (COPPER_ORE)
 - Deepslate Copper Ore (DEEPSLATE_COPPER_ORE)
 - Amethyst Block (AMETHYST_BLOCK)
@@ -33,7 +33,7 @@ Checks for blocks introduced in 1.17+ (at least 5 instances):
 - Cave Vines (CAVE_VINES, CAVE_VINES_PLANT)
 
 **Nether:**
-Checks for blocks introduced in 1.16+ (at least 5 instances):
+Checks for blocks introduced in 1.16+ (scanning from Y=5 and above):
 - Ancient Debris (ANCIENT_DEBRIS)
 - Blackstone (BLACKSTONE)
 - Basalt (BASALT)
@@ -51,8 +51,8 @@ Determines by checking if the biome is "The End" biome:
 
 1. When new chunk data is received (`ChunkDataEvent`), check if chunk is already cached
 2. If not cached, call `searchChunk()` method
-3. Use `ChunkScanner.chunkContainsBlocks()` to scan blocks in the chunk
-4. Based on scan results, add chunk to either `modernChunksCache` or `oldChunksCache`
+3. Use `ChunkScanner.chunkContainsBlocks()` to scan blocks in the chunk (from Y=5 and above)
+4. If any characteristic block is found, mark as modern chunk; otherwise mark as old chunk
 
 ### Advantages
 - Simple and straightforward, easy to understand
@@ -66,8 +66,9 @@ Determines by checking if the biome is "The End" biome:
    - More likely to occur on creative mode servers or servers with admin privileges
 
 2. **False Negatives**
-   - If a new chunk happens not to generate enough (more than 5) characteristic blocks, it may be incorrectly marked as old
+   - If a new chunk happens not to generate any characteristic blocks, it may be incorrectly marked as old
    - In biomes like deserts and oceans, new version blocks generate less frequently
+   - Blocks below Y=5 are not scanned, potentially missing some deep characteristic blocks
 
 3. **Server-Specific Configurations**
    - If server modifies world generator or uses custom terrain generation
