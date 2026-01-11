@@ -1,6 +1,6 @@
 # XaeroPlus Chunk Detection Mechanisms - Detailed Analysis
 
-> **⚠️ Important Notice: If you are experiencing fragmented salt-and-pepper noise highlights on servers with GrimAC Anti-Xray (such as 3c3u), please jump directly to the [GrimAC Anti-Xray Problem Analysis](#critical-discovery-grimac-anti-cheats-anti-xray-feature) section.**
+> **⚠️ Important Notice: If you are experiencing fragmented salt-and-pepper noise highlights on servers with GrimAC Anti-Xray (such as 3c3u), please jump directly to the [GrimAC Anti-Xray Problem Analysis](#grimac-problem-analysis) section.**
 
 ## Overview
 
@@ -290,7 +290,7 @@ Uses fluid (water and lava) flow behavior to detect new chunks. Fluids in newly 
 
 According to the problem description, XaeroPlus shows "random incorrect chunk highlights" on 3c3u server, displaying a fragmented **salt-and-pepper noise** pattern that makes effective chunk state analysis impossible.
 
-### **Critical Discovery: GrimAC Anti-Cheat's Anti-Xray Feature**
+### **Critical Discovery: GrimAC Anti-Cheat's Anti-Xray Feature** {#grimac-problem-analysis}
 
 **This is the root cause of all detection method failures!**
 
