@@ -68,6 +68,7 @@ You can find download links to Xaero's mods here:
   * Tip: For least visual impact, lock the minimap's north
 * [Adjustable minimap scaling that increases how many chunks are visible](https://youtu.be/dNqxGzGAHyk)
 * [NewChunks Highlighting in MiniMap and WorldMap.](https://youtu.be/n-Tf6TJSsiA)
+  * **See [CHUNK_DETECTION_ANALYSIS.md](CHUNK_DETECTION_ANALYSIS.md) (中文) or [CHUNK_DETECTION_ANALYSIS_EN.md](CHUNK_DETECTION_ANALYSIS_EN.md) (English) for detailed analysis of chunk detection mechanisms**
 * [Baritone](https://github.com/cabaletta/baritone) integration
   * Baritone Goals synced as temporary waypoints
   * [Point and Click Travel](https://youtu.be/gbguyfXLgi0)
@@ -79,6 +80,7 @@ You can find download links to Xaero's mods here:
 * [Portal Skip Highlighting in Minimap and WorldMap](https://youtu.be/g_yQ8D95RY0). Detects chunks where a portal could have been loaded.
 * OldChunks Highlighting in Minimap and WorldMap.
   * Intended for use on 2b2t. Highlights chunks that were generated in 1.12.2 or lower in the Overworld and Nether based on the natural blocks present in the chunk.
+  * **For configuration recommendations and troubleshooting, see [CHUNK_DETECTION_ANALYSIS.md](CHUNK_DETECTION_ANALYSIS.md) or [CHUNK_DETECTION_ANALYSIS_EN.md](CHUNK_DETECTION_ANALYSIS_EN.md)**
 * [Transparent minimap background instead of wasted black screen space.](https://imgur.com/a/jGgHqL4)
 * [Fast map region writes](https://youtu.be/B5d7FaHXDCk). Prevent missed chunks in map while traveling at very high speeds.
 * Allow multiple MC instances to read/write to the same map concurrently
